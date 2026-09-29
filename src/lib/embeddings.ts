@@ -2,7 +2,11 @@ import OpenAI from 'openai';
 
 const apiKey = process.env.OPENAI_API_KEY;
 const baseURL = process.env.OPENAI_BASE_URL;
-const embeddingModel = process.env.EMBEDDING_MODEL || 'text-embedding-3-small';
+
+let embeddingModel = process.env.EMBEDDING_MODEL || 'text-embedding-3-small';
+if (baseURL?.includes('openrouter.ai') && !embeddingModel.includes('/')) {
+  embeddingModel = `openai/${embeddingModel}`;
+}
 
 function getOpenAIClient(): OpenAI | null {
   if (!apiKey || apiKey.includes('your_openai_api_key_here')) {
@@ -11,12 +15,17 @@ function getOpenAIClient(): OpenAI | null {
   return new OpenAI({
     apiKey,
     baseURL: baseURL || undefined,
+    defaultHeaders: baseURL?.includes('openrouter.ai')
+      ? {
+          'HTTP-Referer': 'http://localhost:3000',
+          'X-Title': 'DocLens',
+        }
+      : undefined,
   });
 }
 
 /**
- * Deterministic fallback vector generator for local demo mode without an OpenAI API key.
- * Creates a normalized 1536-dimensional frequency vector.
+ * Deterministic fallback vector generator for local demo mode without an API key.
  */
 function createFallbackEmbedding(text: string): number[] {
   const vector = new Array(1536).fill(0);
@@ -32,7 +41,6 @@ function createFallbackEmbedding(text: string): number[] {
     vector[idx] += 1.0;
   }
 
-  // Normalize vector to unit length
   let norm = 0;
   for (let i = 0; i < 1536; i++) {
     norm += vector[i] * vector[i];

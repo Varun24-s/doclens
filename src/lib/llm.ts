@@ -3,7 +3,11 @@ import { RetrievedChunk, ChatResponse, SourceCitation } from '@/types';
 
 const apiKey = process.env.OPENAI_API_KEY;
 const baseURL = process.env.OPENAI_BASE_URL;
-const chatModel = process.env.CHAT_MODEL || 'gpt-4o-mini';
+
+let chatModel = process.env.CHAT_MODEL || 'gpt-4o-mini';
+if (baseURL?.includes('openrouter.ai') && !chatModel.includes('/')) {
+  chatModel = `openai/${chatModel}`;
+}
 
 function getOpenAIClient(): OpenAI | null {
   if (!apiKey || apiKey.includes('your_openai_api_key_here')) {
@@ -12,6 +16,12 @@ function getOpenAIClient(): OpenAI | null {
   return new OpenAI({
     apiKey,
     baseURL: baseURL || undefined,
+    defaultHeaders: baseURL?.includes('openrouter.ai')
+      ? {
+          'HTTP-Referer': 'http://localhost:3000',
+          'X-Title': 'DocLens',
+        }
+      : undefined,
   });
 }
 
@@ -47,7 +57,6 @@ export async function generateAnswer(
 
   const openai = getOpenAIClient();
   if (!openai) {
-    // Local grounded answer synthesis fallback for demo mode
     const bestChunk = contextChunks[0];
     const answer = `Based on page ${bestChunk.pageNumber} of the document:\n\n"${bestChunk.content}"`;
     return { answer, sources };
@@ -84,7 +93,15 @@ export async function generateAnswer(
   } catch (error: any) {
     console.warn(`LLM API call failed (${error.message}). Using extracted context snippet.`);
     const bestChunk = contextChunks[0];
-    const answer = `Based on retrieved section (Page ${bestChunk.pageNumber}):\n\n"${bestChunk.content}"`;
+    
+    let notice = '';
+    if (error.status === 401 || error.message?.includes('401') || error.message?.includes('User not found')) {
+      notice = `⚠️ **Invalid API Key (401 User Not Found)**: The API key in \`.env.local\` was rejected by the provider. Please verify your key at openrouter.ai or platform.openai.com.\n\n`;
+    } else if (error.status === 429 || error.message?.includes('429') || error.message?.includes('credits')) {
+      notice = `⚠️ **API Quota Exceeded (429)**: Your API account has 0 remaining credits.\n\n`;
+    }
+
+    const answer = `${notice}**Retrieved Document Context (Page ${bestChunk.pageNumber})**:\n\n"${bestChunk.content}"`;
     return { answer, sources };
   }
 }
