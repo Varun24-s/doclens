@@ -1,7 +1,3 @@
-// Use require for pdf-parse CJS module compatibility in Node environment
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParse = require('pdf-parse');
-
 export interface ExtractedPage {
   pageNumber: number;
   text: string;
@@ -17,6 +13,11 @@ export async function extractTextFromPDF(pdfBuffer: Buffer): Promise<ExtractedPa
   if (!pdfBuffer || pdfBuffer.length === 0) {
     throw new Error('PDF buffer is empty or invalid.');
   }
+
+  // Require pdf-parse dynamically inside the function execution block
+  // to avoid build-time module evaluation issues in Next.js
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const pdfParse = require('pdf-parse');
 
   const pages: ExtractedPage[] = [];
 

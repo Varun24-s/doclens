@@ -4,6 +4,9 @@ import { generateQueryEmbedding } from '@/lib/embeddings';
 import { retrieveRelevantChunks } from '@/lib/retrieval';
 import { generateAnswer } from '@/lib/llm';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();

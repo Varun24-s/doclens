@@ -5,6 +5,9 @@ import { generateEmbeddings } from '@/lib/embeddings';
 import { createDocument, initDatabase, insertDocumentChunks, updateDocumentStatus } from '@/lib/db';
 import { DocumentChunk } from '@/types';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 // Max allowed file size: 10MB
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
