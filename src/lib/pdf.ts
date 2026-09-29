@@ -1,4 +1,6 @@
-import pdfParse from 'pdf-parse';
+// Use require for pdf-parse CJS module compatibility in Node environment
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pdfParse = require('pdf-parse');
 
 export interface ExtractedPage {
   pageNumber: number;
