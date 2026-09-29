@@ -25,6 +25,11 @@
 *.pem
 /scratch/
 
+# non-essential markdown / agent files
+AGENTS.md
+CLAUDE.md
+INTERVIEW_PREP.md
+
 # debug
 npm-debug.log*
 yarn-debug.log*
